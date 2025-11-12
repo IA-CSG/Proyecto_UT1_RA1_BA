@@ -142,9 +142,3 @@ ORDER BY kpi_ejecucion DESC;
 ```
 
 ---
-
-## Notas
-
-- Lo que en el ejemplo era `clean_ventas` aquí es **tu** `kpi_ejecucion` + el detalle de `gastos_clean`/`presupuesto_clean` en silver.
-- Lo que en el ejemplo era `ventas_diarias` aquí es **tu** `tendencia_mensual`.
-- Las métricas están centradas en **ejecución presupuestaria**, no en ventas.
