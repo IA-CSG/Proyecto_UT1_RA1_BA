@@ -319,7 +319,7 @@ def build_kpi(df_gastos_valid: pd.DataFrame, df_pres: pd.DataFrame) -> pd.DataFr
         how="left"
     )
     
-    # Rellena nulos y redondea
+    # Rellena nulos y redondea a 2 decimales - DECIMAL(18,2)
     df_kpi["gasto_acumulado"] = df_kpi["gasto_acumulado"].fillna(0).round(2)
     df_kpi["presupuesto"] = df_kpi["presupuesto"].fillna(0).round(2)
 
@@ -329,7 +329,7 @@ def build_kpi(df_gastos_valid: pd.DataFrame, df_pres: pd.DataFrame) -> pd.DataFr
     def calc_kpi(row):
         if row["presupuesto"] == 0:
             return None
-        return round(row["gasto_acumulado"] / row["presupuesto"], 4)
+        return round(row["gasto_acumulado"] / row["presupuesto"], 2)
 
     df_kpi["kpi_ejecucion"] = df_kpi.apply(calc_kpi, axis=1)
     print("✓ build_kpi completado")
@@ -407,7 +407,7 @@ def save_sqlite(df_kpi: pd.DataFrame, monthly: pd.DataFrame):
         SUM(presupuesto) AS presupuesto_total,
         CASE
             WHEN SUM(presupuesto) = 0 THEN NULL
-            ELSE ROUND(SUM(gasto_acumulado) / SUM(presupuesto), 4)
+            ELSE ROUND(SUM(gasto_acumulado) / SUM(presupuesto), 2)
         END AS kpi_ejecucion_area
     FROM kpi_ejecucion
     GROUP BY area
@@ -432,7 +432,7 @@ def generate_report(df_kpi: pd.DataFrame, monthly: pd.DataFrame, invalid_gastos:
         )
     )
     kpi_area["kpi_ejecucion"] = kpi_area.apply(
-        lambda r: None if r["presupuesto"] == 0 else round(r["gasto_acumulado"]/r["presupuesto"], 4),
+        lambda r: None if r["presupuesto"] == 0 else round(r["gasto_acumulado"]/r["presupuesto"], 2),
         axis=1
     )
 
@@ -492,7 +492,6 @@ def generate_report(df_kpi: pd.DataFrame, monthly: pd.DataFrame, invalid_gastos:
     print(f"✓ Reporte generado en: {report_path}")
 
 
-# ejecutar capa oro y reporte con lo que ya salió de silver
 print("\n" + "-" * 70)
 print("3. ORO: KPI + TENDENCIA + PERSISTENCIA + REPORTE")
 print("-" * 70)

@@ -1,7 +1,7 @@
 # Diseño de Ingestión
 
 ## Resumen
-Los datos de **presupuesto** y **gastos** entran desde ficheros CSV depositados en una ruta controlada (`data/drops/`). La ingesta se ejecuta en modo **batch** (por archivo) y es **idempotente**: si un archivo ya fue procesado, no se vuelve a cargar. Se registran metadatos mínimos de trazabilidad (`_ingest_ts`, `_source_file`, `_batch_id`) y se mantiene un **manifest** de ingestas para evitar duplicados. Las filas inválidas se envían a una ruta de **quarantine** con el motivo.
+Los datos de **presupuesto** y **gastos** entran desde ficheros CSV depositados en una ruta controlada (`data/drops/`). <br>La ingesta se ejecuta en modo **batch** (por archivo) y es **idempotente**: si un archivo ya fue procesado, no se vuelve a cargar. <br>Se registran metadatos mínimos de trazabilidad (`_ingest_ts`, `_source_file`, `_batch_id`) y se mantiene un **manifest** de ingestas para evitar duplicados. <br>Las filas inválidas se envían a una ruta de **quarantine** con el motivo.
 
 ---
 
@@ -11,7 +11,7 @@ Los datos de **presupuesto** y **gastos** entran desde ficheros CSV depositados 
   - `data/drops/gastos.csv`  
   - `data/drops/presupuesto.csv`
 - **Formato:** CSV (UTF-8, separado por `;`)
-- **Frecuencia esperada:** batch manual (cada vez que llega un CSV nuevo a la carpeta).  
+- **Frecuencia esperada:** batch manual.  
 
 ---
 
@@ -26,13 +26,13 @@ Los datos de **presupuesto** y **gastos** entran desde ficheros CSV depositados 
 ## Idempotencia y deduplicación
 
 - **batch_id:**  
-  - Se calcula como `md5(path + tamaño + mtime)` → garantiza que si el archivo no cambia, el `batch_id` es el mismo.
+  - Se calcula como `md5(path + tamaño + mtime)` lo que garantiza que si el archivo no cambia, el `batch_id` es el mismo.
   - Se persiste en `bronze/ingest_manifest.parquet`.
 - **Clave natural (lógica):**  
   - Para **gastos**: (`fecha`, `area_normalizada`, `partida_normalizada`)  
   - Para **presupuesto**: (`area_normalizada`, `partida_normalizada`)
 - **Política de deduplicación:**  
-  - “**último gana por `_ingest_ts`**”.  
+  - **último gana por `_ingest_ts`**.  
   - Se ordenan los registros por `_ingest_ts` ascendente y se hace `drop_duplicates(..., keep="last")` en silver.
   - Esto permite reinyectar el mismo registro corregido en una ingesta posterior.
 
@@ -51,7 +51,7 @@ Los datos de **presupuesto** y **gastos** entran desde ficheros CSV depositados 
   - En capa oro se conserva la trazabilidad de gastos agregando:
     - `last_ingest_ts` (máximo `_ingest_ts` de las filas que componen el agregado)
     - `source_files` (lista de archivos que aportaron datos)
-- **DLQ / quarantine:**  
+- **Quarantine:**  
   - Ruta: `data/quarantine/`
   - Ficheros: `gastos_invalidos.parquet`, `presupuesto_invalidos.parquet`
   - Motivos registrados en `_quarantine_cause`:

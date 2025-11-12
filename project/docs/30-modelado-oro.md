@@ -1,13 +1,11 @@
 # Modelo de negocio (capa oro)
 
 ## Objetivo
-Exponer una capa de **consumo** a partir de los datos limpios de **presupuesto** y **gastos** para responder a preguntas como:
+Poder contestar a preguntas como:
 - ¿cuánto se ha gastado por área y partida?
 - ¿cuánto estaba presupuestado?
 - ¿qué porcentaje de ejecución tiene cada área?
 - ¿cómo evoluciona el gasto mes a mes?
-
-La capa oro ya viene depurada, deduplicada y con trazabilidad.
 
 ---
 
@@ -23,7 +21,6 @@ La capa oro ya viene depurada, deduplicada y con trazabilidad.
   - `gasto_acumulado` (DECIMAL(18,2))
   - `kpi_ejecucion` = `gasto_acumulado / presupuesto`
   - `area_normalizada`, `partida_normalizada`
-  - `last_ingest_ts`, `source_files` (trazabilidad)
 - **Uso:** reportes de ejecución por área y por partida.
 
 ### 2. `tendencia_mensual` (tabla/vista de agregación)

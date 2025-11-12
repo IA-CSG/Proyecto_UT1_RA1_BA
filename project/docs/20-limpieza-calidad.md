@@ -6,10 +6,7 @@
 |--------|----------------|----------------------|
 | `fecha` | `datetime` ISO (`YYYY-MM-DD` o `TIMESTAMP UTC`) | Se convierte con `pd.to_datetime(..., errors="coerce")`. Filas con fecha inválida → **quarantine**. |
 | `importe`, `presupuesto` | `DECIMAL(18,2)` | Numérico ≥ 0. Se redondea a 2 decimales. |
-| `unidades`, `precio` (si existen) | `unidades`: entero ≥ 0, `precio`: decimal ≥ 0 | Si ambas existen, se calcula `importe = unidades × precio`. |
 | `area`, `partida` | texto normalizado | Se limpian tildes, espacios, se pasa a minúsculas. Campos vacíos → **quarantine**. |
-
-> En base a los requerimientos, los importes monetarios **no se manejan como float**, sino como `DECIMAL(18,2)` al persistir en SQLite y Parquet.
 
 ---
 
@@ -19,7 +16,7 @@
 - `fecha`
 - `area`
 - `partida`
-- `importe` (o `presupuesto` según dataset)
+- `importe` o `presupuesto` (según dataset)
 
 **Tratamiento:**
 - Si cualquiera de estos es nulo o no convertible al tipo esperado, la fila se marca con `_quarantine_cause` indicando el motivo (por ejemplo: `fecha_invalida`, `importe_invalido`, `partida_vacia`).
@@ -34,7 +31,7 @@
 | Regla | Descripción |
 |--------|--------------|
 | `importe >= 0` y `presupuesto >= 0` | Importes negativos no permitidos. |
-| `importe ≤ 1,000,000` | Protección contra valores atípicos o errores de carga. |
+| `importe ≤ 1_000_000` | Protección contra valores atípicos o errores de carga. |
 | `fecha ≤ hoy` | No se admiten fechas futuras. |
 | `area_normalizada` y `partida_normalizada` | Deben existir en las listas de presupuesto válidas. |
 
@@ -48,9 +45,9 @@
   - **Presupuesto:** (`area_normalizada`, `partida_normalizada`)
   - **Gastos:** (`fecha`, `area_normalizada`, `partida_normalizada`)
 - **Política:**  
-  - “**Último gana por `_ingest_ts`**”.
+  - **Último gana por `_ingest_ts`**.
   - Se ordenan los registros por `_ingest_ts` ascendente y se ejecuta `drop_duplicates(..., keep="last")`.
-- Permite recargar el mismo registro con datos actualizados sin generar duplicados.
+  - Esto permite recargar el mismo registro con datos actualizados sin generar duplicados.
 
 ---
 
@@ -60,7 +57,6 @@
   - Elimina tildes y caracteres diacríticos (`NFKD`).
   - Convierte a **minúsculas**.
   - Aplica `strip()` para quitar espacios antes y después.
-- Códigos o identificadores (ej. `P001`) pueden normalizarse a **mayúsculas** si lo requiere la capa oro.
 - Evita problemas de comparación entre "Finanzas", "finanzas" y "finánzas".
 
 ---
@@ -80,20 +76,7 @@ Estos campos permiten rastrear cualquier valor desde la capa oro hasta su fuente
 
 ---
 
-## QA (Quality Assurance) rápida --- NO IMPLEMENTADO ---
+## QA (Quality Assurance) --- NO IMPLEMENTADO ---
 
-Indicadores implementados en la limpieza (`silver`):
+QA es el conjunto de prácticas y controles que se aplican para garantizar que los datos sean correctos, coherentes y útiles antes de usarlos para análisis o decisiones.
 
-| Métrica | Descripción |
-|----------|--------------|
-| **% de filas en quarantine** | `(filas_invalidas / filas_totales) × 100` |
-| **Conteo de filas válidas por día** | Verificación de continuidad temporal de datos (`fecha`). |
-| **Comparación con esperado** | Se puede automatizar comparando contra presupuesto por área/partida. |
-
-Ejemplo de control en logs:
-```
-Presupuesto: 120 filas → Clean=118, Quarantine=2
-Gastos: 350 filas → Clean=340, Quarantine=10
-```
-
-> Si el % de cuarentena supera el 5%, se debe revisar la fuente o los formatos.

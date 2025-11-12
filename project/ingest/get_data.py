@@ -38,15 +38,7 @@ def inyectar_error(registro: dict, df_presup: pd.DataFrame):
         registro["importe"] = -500.0
     elif tipo_error == 7:
         # importe fuera del intervalo
-        # si sabemos el area/partida podemos buscar el presupuesto para exagerar
-        #presup_row = df_presup[(df_presup["area"] == registro["area"]) & (df_presup["partida"] == registro["partida"])]
-        #if not presup_row.empty:
-            #presup = presup_row.iloc[0]["presupuesto"]
-            # algo muy por encima
-            #registro["importe"] = round(presup * 2.5, 2)
-        #else:
-            # si no hay presupuesto, ponemos algo muy alto
-            registro["importe"] = 10_000_000.0
+        registro["importe"] = 10_000_000.0
 
     return registro
 

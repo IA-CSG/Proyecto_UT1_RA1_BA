@@ -1,6 +1,10 @@
-# 🧾 Resumen del Proyecto ETL — Finanzas: Presupuesto vs Gasto
+# Resumen Proyecto ETL — Finanzas: Presupuesto vs Gasto
 
----
+title: "Plantilla de documento del proyecto"<br>
+tags: ["UT1","RA1","docs"] <br>
+version: "1.0.0"<br>
+owner: "Rafael Garcia Lopez"<br>
+status: "Publicado" 
 
 ## 1️⃣ Objetivo
 
@@ -10,7 +14,7 @@ Implementar un **proceso ETL ligero e idempotente** para comparar **presupuesto 
 - Generar un **reporte automatizado** y trazable para la toma de decisiones financieras.
 
 > **Problema que resuelve:**  
-> La falta de un control centralizado y reproducible sobre la ejecución presupuestaria, dependiente de hojas de cálculo manuales y sin trazabilidad.
+> La falta de un control sobre la ejecución presupuestaria, dependiente de hojas de cálculo manuales y sin trazabilidad.
 
 ---
 
@@ -40,7 +44,7 @@ Implementar un **proceso ETL ligero e idempotente** para comparar **presupuesto 
 - **Validaciones:**  
   - Tipos: `fecha` (ISO), `importe` (DECIMAL(18,2)), `area`/`partida` (texto).  
   - Nulos: filas incompletas → quarantine.  
-  - Rangos: `importe >= 0` y `< 1e9`; `fecha <= hoy`.  
+  - Rangos: `importe >= 0` y `< 1_000_000`; `fecha <= hoy`.  
   - Dominios: áreas y partidas deben existir en `presupuesto_clean`.  
 - **Trazabilidad:** `_ingest_ts`, `_source_file`, `_batch_id` en todas las capas.
 - **Cuarentena:** `data/quarantine/` con causas documentadas.
@@ -54,7 +58,8 @@ Implementar un **proceso ETL ligero e idempotente** para comparar **presupuesto 
 
 2. **Ejecutar el ETL:**  
    ```bash
-   python src/etl_finanzas.py
+   python ingest/get_data.py      # genera los CSV de ejemplo
+   python ingest/run.py           # programa principal: parquet + sqllite + reporte.md
    ```
 
 3. **Estructura de salida:**  
@@ -83,39 +88,24 @@ Implementar un **proceso ETL ligero e idempotente** para comparar **presupuesto 
 | Parquet oro | `data/storage/gold/` |
 | Vista SQL | `vw_kpi_area` en `sql/finanzas.db` |
 | Reporte generado | `output/reporte.md` |
-| Filas quarantine | `data/quarantine/gastos_invalidos.parquet` |
+| Filas inválidas | `data/quarantine/gastos_invalidos.parquet` |
 
 **Ejemplo de salida:**
 ```
 Presupuesto: 120 filas → Clean=118, Quarantine=2
 Gastos: 350 filas → Clean=340, Quarantine=10
-✓ Oro parquet guardado: 45 filas
-✓ SQLite actualizado: vista vw_kpi_area
-✓ Reporte generado: output/reporte.md
 ```
 
 ---
 
 ## 6️⃣ Resultados
 
-| Indicador | Valor |
-|------------|--------|
-| **Presupuesto total** | 1,200,000 € |
-| **Gasto acumulado** | 1,104,000 € |
-| **KPI global** | 0.92 (92%) |
-| **Áreas sobre-ejecutadas** | 2 |
-| **% de cuarentena** | 3.4% |
-
-**Principales hallazgos:**
-- El área de **Operaciones** supera el 105% de ejecución.
-- **RRHH** mantiene una ejecución baja (<70%), indicando oportunidad de reasignación.
-- **Tendencia mensual:** aumento de gasto en octubre-noviembre por cierre de proyectos.
+VER REPORTE GENERADO `output/reporte.md`
 
 ---
 
 ## 7️⃣ Lecciones aprendidas
 
-- El enfoque modular por capas facilitó el control de calidad.  
 - La idempotencia por `batch_id` simplificó la reejecución.  
 - Faltó automatizar alertas de cuarentena y sobre-ejecución.  
 - Es clave documentar los dominios válidos (áreas, partidas) antes de la carga.
@@ -124,14 +114,13 @@ Gastos: 350 filas → Clean=340, Quarantine=10
 
 ## 8️⃣ Próximos pasos
 
-| Acción | Responsable | Estado |
-|---------|--------------|---------|
-| Implementar scheduler (cron/CI) | — | Pendiente |
-| Automatizar control de % cuarentena | — | Pendiente |
-| Desarrollar dashboard Power BI | — | En planificación |
-| Extender modelo a año siguiente | — | Pendiente |
+- Implementar scheduler
+- Automatizar control de % cuarentena
+- Revisar partidas con ejecución >110% en áreas críticas.  
+- Validar si los gastos fuera de dominio corresponden a nuevas partidas no presupuestadas.  
+- Analizar tendencia mensual y ajustar presupuestos para diciembre.  
+- Automatizar alertas de sobre-ejecución semanal.
 
 ---
 
-### ✍️ Nota final
-El pipeline cumple con los objetivos de trazabilidad, calidad y transparencia de ejecución presupuestaria, y está listo para integrarse en procesos de automatización o reporting avanzado.
+
