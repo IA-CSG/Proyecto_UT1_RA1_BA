@@ -1,7 +1,10 @@
-# Diseño de Ingestión
+# Diseño de Ingestión <Br> 10-diseno-ingesta.md
 
 ## Resumen
-Los datos de **presupuesto** y **gastos** entran desde ficheros CSV depositados en una ruta controlada (`data/drops/`). <br>La ingesta se ejecuta en modo **batch** (por archivo) y es **idempotente**: si un archivo ya fue procesado, no se vuelve a cargar. <br>Se registran metadatos mínimos de trazabilidad (`_ingest_ts`, `_source_file`, `_batch_id`) y se mantiene un **manifest** de ingestas para evitar duplicados. <br>Las filas inválidas se envían a una ruta de **quarantine** con el motivo.
+- Los datos de **presupuesto** y **gastos** entran desde ficheros CSV depositados en una ruta controlada (`data/drops/`).
+- La ingesta se ejecuta en modo **batch** (por archivo) y es **idempotente**: si un archivo ya fue procesado, no se vuelve a cargar.
+- La trazabilidad se registra mediante `_ingest_ts`, `_source_file`, `_batch_id` y se mantiene un **manifest** de ingestas para evitar duplicados.
+- Las filas inválidas se envían a **cuarentena** `data/quarantine`con los motivos.
 
 ---
 
@@ -18,7 +21,7 @@ Los datos de **presupuesto** y **gastos** entran desde ficheros CSV depositados 
 ## Estrategia
 
 - **Modo:** batch por archivo.
-- **Incremental:** controlado por archivo mediante **hash del archivo**. No se reingesta el mismo contenido.
+- **Incremental:** controlado por archivo mediante **hash del archivo**. No se reingesta el mismo archivo (con mismo path, tamaño y mtime).
 - **Particionado:** no se particiona físicamente en disco por fecha; se guarda en Parquet en capas (`bronze/`, `silver/`, `gold/`).  
 
 ---
@@ -42,21 +45,22 @@ Los datos de **presupuesto** y **gastos** entran desde ficheros CSV depositados 
 
 - **Checkpoint / manifest:**  
   - `bronze/ingest_manifest.parquet` guarda: `_batch_id`, `_source_file`, `_ingest_ts`, `n_rows`.
-  - Antes de ingerir un archivo nuevo, se consulta este manifest; si el `batch_id` ya existe, se omite.
+  - Antes de ingerir un archivo nuevo, se consulta este manifest y si el `batch_id` ya existe, se omite.
 - **Trazabilidad:**  
   - Cada fila ingerida lleva:
     - `_ingest_ts`: timestamp UTC de la ingesta
     - `_source_file`: nombre del CSV origen
-    - `_batch_id`: identificador único del archivo
-  - En capa oro se conserva la trazabilidad de gastos agregando:
-    - `last_ingest_ts` (máximo `_ingest_ts` de las filas que componen el agregado)
-    - `source_files` (lista de archivos que aportaron datos)
+    - `_batch_id`: identificador único del archivo (hash md5)
+  - En capa oro no se conserva la trazabilidad.
 - **Quarantine:**  
   - Ruta: `data/quarantine/`
   - Ficheros: `gastos_invalidos.parquet`, `presupuesto_invalidos.parquet`
   - Motivos registrados en `_quarantine_cause`:
     - `fecha_invalida`
     - `importe_invalido`
+    - `importe_excesivo`
+    - `area_no_valida`
+    - `partida_no_valida`
     - `partida_no_en_presupuesto`
 
 ---

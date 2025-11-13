@@ -1,4 +1,4 @@
-# Lecciones aprendidas
+# Lecciones aprendidas <Br> 99-lecciones-aprendidas.md
 
 ## 1. Qué salió bien
 
@@ -6,7 +6,7 @@
 - **Idempotencia implementada correctamente:** el uso del `batch_id` (hash del archivo) evitó duplicados y permitió reejecuciones seguras.  
 - **Quarantine con causa documentada:** permitió detectar errores comunes (fechas inválidas, partidas fuera de dominio) sin interrumpir el flujo completo.  
 - **Reporte automático en Markdown:** el informe final consolidó KPIs, calidad de datos y notas de interpretación, mejorando la trazabilidad del proceso.  
-- **Trazabilidad técnica clara:** `_ingest_ts`, `_source_file`, `_batch_id` propagados hasta capa oro.  
+- **Trazabilidad técnica clara:** en **bronze** y **silver** mediante `_ingest_ts`, `_source_file`, `_batch_id`.  
 - **Uso de SQLite + Parquet:** combinó velocidad de consulta con persistencia portable, ideal para pruebas locales.  
 
 ---
@@ -16,7 +16,7 @@
 - **Automatización del pipeline:** actualmente la ejecución es manual.  
 - **Alertas y monitoreo:** falta un control automatizado de % de cuarentena o de sobre-ejecución presupuestaria (notificación por correo).  
 - **Validación temprana de esquema:** agregar validación de columnas esperadas al leer CSV para evitar errores silenciosos.
-- **Particionado temporal:** particionar los Parquet por `año/mes` para acelerar consultas históricas.  
+- **Particionado temporal:** particionar los Parquet por `año/mes` para acelerar consultas históricas.
 
 ---
 
@@ -34,7 +34,7 @@
 **Evidencias complementarias**
 - Archivos Parquet de cada capa (`bronze/`, `silver/`, `gold/`)
 - Reporte generado: `output/reporte.md`
-- Vista desde SQLite
+- Vista `vw_kpi_area` en **SQLite** con agregación por área
 
 ---
 

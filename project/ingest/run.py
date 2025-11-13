@@ -1,15 +1,8 @@
 
-# Instalar panda	            python -m pip install pandas
-# Instalar una barra progresiva	python -m pip install tqdm
-# Instalar parquet	            python.exe -m pip install pyarrow
-# Usar Markdown                 python -m pip install tabulate 
-
-
-# En la limpieza podría comprobar si el presup_df está vacío y entonces no hacer nada ya que se supone que se ha hecho
-# Pero en este caso volvemos hacer la limpieza
-#if presup_df.empty:
-    #print("No hay presupuesto nuevo que limpiar, se salta la fase SILVER de presupuesto.")
-#else:
+# python -m pip install pandas          # Instalar panda
+# python -m pip install tqdm            # Instala una barra progresiva	
+# python.exe -m pip install pyarrow     # Instala parquet
+# python -m pip install tabulate        # Usar Markdown                  
 
 """
 Pipeline finanzas: presupuesto vs gasto (ETL ligero)
@@ -223,9 +216,7 @@ presup_df["presupuesto"] = pd.to_numeric(presup_df["presupuesto"], errors="coerc
 presup_valid = (
     presup_df["area_normalizada"].isin(AREAS_NORM) & #.notna()
     presup_df["partida_normalizada"].isin(PARTIDAS_NORM) & #.notna()
-    presup_df["presupuesto"].notna() & 
-    (presup_df["presupuesto"] >= 0) &
-    (presup_df["presupuesto"] <= MAX_PRESUPUESTO)
+    presup_df["presupuesto"].notna() & (presup_df["presupuesto"] >= 0) & (presup_df["presupuesto"] <= MAX_PRESUPUESTO)
 )
 
 presup_clean = presup_df.loc[presup_valid].copy()   # devuelve las filas con datos correctos
@@ -286,7 +277,7 @@ if not gastos_quar.empty:
     gastos_quar.to_parquet(QUARANTINE / "gastos_invalidos.parquet", index=False)
 
 # -----------------------------------------------------
-# 3. ORO: KPI + TENDENCIA + PERSISTENCIA + REPORTE
+# 3. ORO: KPI + TENDENCIA + PERSISTENCIA + REPORTE (FUNCIONES)
 # -----------------------------------------------------
 
 # Esta función toma:
@@ -301,14 +292,15 @@ if not gastos_quar.empty:
 
 # Un KPI es una medida numérica que se usa para evaluar si una actividad, proceso o área está cumpliendo sus objetivos.
 def build_kpi(df_gastos_valid: pd.DataFrame, df_pres: pd.DataFrame) -> pd.DataFrame:
-    # Agrupa los gastos por área y partida
+    # Construye KPI agrupando los gastos por área y partida
+
     gasto_agg = (
         df_gastos_valid
         .groupby(["area_normalizada", "partida_normalizada"], as_index=False)
         .agg(gasto_acumulado=("importe", "sum"))
     )
 
-    #Prepara el presupuesto con las columnas indicadas
+    # Prepara el presupuesto con las columnas indicadas
     pres_cols = ["area_normalizada", "partida_normalizada", "area", "partida", "presupuesto"]
     df_pres_small = df_pres[pres_cols].copy()
 
@@ -323,9 +315,8 @@ def build_kpi(df_gastos_valid: pd.DataFrame, df_pres: pd.DataFrame) -> pd.DataFr
     df_kpi["gasto_acumulado"] = df_kpi["gasto_acumulado"].fillna(0).round(2)
     df_kpi["presupuesto"] = df_kpi["presupuesto"].fillna(0).round(2)
 
-    # Calcula el KPI
-    # Si el presupuesto es 0 → KPI = None (evita división por 0).
-    # Si no, KPI = gasto / presupuesto.
+    # Calcula el KPI y evita la división por 0 si el presupuesto es 0 (KPI = None)
+    # En caso contrario, KPI = gasto / presupuesto.
     def calc_kpi(row):
         if row["presupuesto"] == 0:
             return None
@@ -352,11 +343,12 @@ def build_monthly_trend(df_gastos_valid: pd.DataFrame) -> pd.DataFrame:
         df.groupby(["year_month", "area"], as_index=False)
         .agg(gasto_mensual=("importe", "sum"))
     )
+    monthly["gasto_mensual"] = monthly["gasto_mensual"].round(2)    # redondea a 2 decimales
     print("✓ build_monthly_trend completado")
     return monthly
 
 # -----------------------------------------------------
-# 4. ALMACENAMIENTO: SQLITE
+# 4. ALMACENAMIENTO: SQLITE (FUNCIONES)
 # -----------------------------------------------------
 
 # Guarda los resultados en formato Parquet (más rápido y ligero).
@@ -388,19 +380,67 @@ def save_parquet(df_kpi: pd.DataFrame, monthly: pd.DataFrame):
 #  - vw_kpi_area
 
 def save_sqlite(df_kpi: pd.DataFrame, monthly: pd.DataFrame):
-    # Crea/abre la base de datos SQLite en sql/finanzas.db.
+    """
+    Crea tablas con tipos monetarios DECIMAL(18,2) (NUMERIC en SQLite)
+    y carga los datos correctamente tipados.
+    """
     conn = sqlite3.connect(SQLITE_PATH)
-    # Si ya existen, las reemplaza (if_exists="replace").
-    df_kpi.to_sql("kpi_ejecucion", conn, if_exists="replace", index=False)
-    monthly.to_sql("tendencia_mensual", conn, if_exists="replace", index=False)
+    cur = conn.cursor()
 
-    # Crea una vista (VIEW)
-    # Crea una “tabla virtual” llamada vw_kpi_area que resume los KPI por área (area, gasto_total, presupuesto_total, kpi_ejecucion_area)
-    # Suma el gasto y presupuesto de cada área.
-    # Calcula el KPI promedio (gasto/presupuesto).
-    # Ordena de mayor a menor ejecución.
-    create_view = """
-    CREATE VIEW IF NOT EXISTS vw_kpi_area AS
+    # eliminar tablas/vistas previas
+    cur.execute("DROP VIEW IF EXISTS vw_kpi_area;")
+    cur.execute("DROP TABLE IF EXISTS kpi_ejecucion;")
+    cur.execute("DROP TABLE IF EXISTS tendencia_mensual;")
+
+    # crear tablas con tipos DECIMAL/NUMERIC
+    cur.execute("""
+    CREATE TABLE kpi_ejecucion (
+        area TEXT,
+        partida TEXT,
+        presupuesto DECIMAL(18,2),
+        gasto_acumulado DECIMAL(18,2),
+        kpi_ejecucion DECIMAL(5,2)
+    );
+    """)
+
+    cur.execute("""
+    CREATE TABLE tendencia_mensual (
+        year_month TEXT,
+        area TEXT,
+        gasto_mensual DECIMAL(18,2)
+    );
+    """)
+
+    # insertar datos manualmente para respetar los tipos
+    if not df_kpi.empty:
+        data_kpi = [
+            (
+                str(r["area"]),
+                str(r["partida"]),
+                float(r["presupuesto"]) if pd.notna(r["presupuesto"]) else None,
+                float(r["gasto_acumulado"]) if pd.notna(r["gasto_acumulado"]) else None,
+                float(r["kpi_ejecucion"]) if pd.notna(r["kpi_ejecucion"]) else None
+            )
+            for _, r in df_kpi.iterrows()
+        ]
+        cur.executemany("""
+            INSERT INTO kpi_ejecucion (area, partida, presupuesto, gasto_acumulado, kpi_ejecucion)
+            VALUES (?, ?, ?, ?, ?);
+        """, data_kpi)
+
+    if not monthly.empty:
+        data_monthly = [
+            (str(r["year_month"]), str(r["area"]), float(r["gasto_mensual"]))
+            for _, r in monthly.iterrows()
+        ]
+        cur.executemany("""
+            INSERT INTO tendencia_mensual (year_month, area, gasto_mensual)
+            VALUES (?, ?, ?);
+        """, data_monthly)
+
+    # crear vista de resumen
+    cur.execute("""
+    CREATE VIEW vw_kpi_area AS
     SELECT 
         area,
         SUM(gasto_acumulado) AS gasto_total,
@@ -412,18 +452,27 @@ def save_sqlite(df_kpi: pd.DataFrame, monthly: pd.DataFrame):
     FROM kpi_ejecucion
     GROUP BY area
     ORDER BY kpi_ejecucion_area DESC;
-    """
-    conn.execute(create_view)
+    """)
+
     conn.commit()
     conn.close()
-    print(f"✓ SQLite actualizado en: {SQLITE_PATH}")
+    print(f"✓ SQLite actualizado en: {SQLITE_PATH} (tipos NUMERIC/DECIMAL aplicados)")
+
 
 # -----------------------------------------------------
 # 5. REPORTE MARKDOWN
 # -----------------------------------------------------
-def generate_report(df_kpi: pd.DataFrame, monthly: pd.DataFrame, invalid_gastos: pd.DataFrame):
+def generate_report(df_kpi: pd.DataFrame, monthly: pd.DataFrame, invalid_gastos: pd.DataFrame, gastos_clean: pd.DataFrame):
     report_path = OUT / "reporte.md"
 
+    # Rango real de fechas en los gastos
+    if not gastos_clean.empty and "fecha" in gastos_clean.columns:
+        dt_min = gastos_clean["fecha"].min().date().isoformat()
+        dt_max = gastos_clean["fecha"].max().date().isoformat()
+    else:
+        dt_min = dt_max = "N/D"
+
+    # KPI por área (agregado)
     kpi_area = (
         df_kpi.groupby("area", as_index=False)
         .agg(
@@ -432,59 +481,111 @@ def generate_report(df_kpi: pd.DataFrame, monthly: pd.DataFrame, invalid_gastos:
         )
     )
     kpi_area["kpi_ejecucion"] = kpi_area.apply(
-        lambda r: None if r["presupuesto"] == 0 else round(r["gasto_acumulado"]/r["presupuesto"], 2),
+        lambda r: None if r["presupuesto"] == 0 else round(r["gasto_acumulado"] / r["presupuesto"], 2),
         axis=1
     )
 
+    # --- Top N y Por día ---
+    TOP_N = 10  # ajusta a 5/10 según convenga
+
+    # Top N áreas por gasto
+    top_areas = kpi_area.sort_values("gasto_acumulado", ascending=False).head(TOP_N)
+
+    # Top N partidas (área+partida) por gasto
+    top_partidas = (
+        df_kpi.groupby(["area", "partida"], as_index=False)
+              .agg(
+                  presupuesto=("presupuesto", "sum"),
+                  gasto_acumulado=("gasto_acumulado", "sum")
+              )
+    )
+    top_partidas["kpi_ejecucion"] = top_partidas.apply(
+        lambda r: None if r["presupuesto"] == 0 else round(r["gasto_acumulado"]/r["presupuesto"], 2),
+        axis=1
+    )
+    top_partidas = top_partidas.sort_values("gasto_acumulado", ascending=False).head(TOP_N)
+
+    # Gasto por día (Top N días con mayor gasto)
+    if not gastos_clean.empty and "fecha" in gastos_clean.columns:
+        gasto_diario_total = (
+            gastos_clean.assign(fecha_d=gastos_clean["fecha"].dt.date)
+                        .groupby("fecha_d", as_index=False)
+                        .agg(gasto=("importe", "sum"))
+                        .sort_values("gasto", ascending=False)
+                        .head(TOP_N)
+        )
+    else:
+        gasto_diario_total = pd.DataFrame(columns=["fecha_d", "gasto"])
+
+    # Conclusiones automáticas básicas
+    conclusiones = []
+    sobre_ejec = kpi_area[kpi_area["kpi_ejecucion"].fillna(0) > 1]
+    if not sobre_ejec.empty:
+        lst = ", ".join(f"{r['area']} ({r['kpi_ejecucion']*100:.0f}%)" for _, r in sobre_ejec.iterrows())
+        conclusiones.append(f"- Sobre-ejecución detectada en: {lst}.")
+    if not invalid_gastos.empty:
+        conclusiones.append(f"- {len(invalid_gastos)} filas en cuarentena (revisar calidad de datos).")
+    if sobre_ejec.empty and invalid_gastos.empty:
+        conclusiones.append("- Sin incidencias relevantes en la ejecución presupuestaria.")
+
+    # Construcción del reporte
     lines = []
     lines.append("# Informe de Ejecución Presupuestaria\n")
     lines.append(f"_Generado: {datetime.now().strftime('%Y-%m-%d %H:%M')}_\n")
+
     lines.append("## 1. Contexto\n")
-    lines.append("- Fuente: `gastos.csv` y `presupuesto.csv`.\n")
-    lines.append("- Actualización: batch (ETL ligero) previo a capa oro.\n")
-    lines.append("- Objetivo: medir la ejecución del presupuesto por área y partida.\n")
+    lines.append("- Fuente: `gastos.csv` y `presupuesto.csv`\n")
+    lines.append(f"- Periodo: {dt_min} a {dt_max}\n")
+    lines.append("- Objetivo: medir la ejecución presupuestaria por área y partida.\n")
 
     lines.append("## 2. Definiciones de KPI\n")
-    lines.append("- **gasto_acumulado**: suma de los importes registrados en `gastos.csv` para un área/partida.\n")
-    lines.append("- **presupuesto**: importe planificado en `presupuesto.csv`.\n")
-    lines.append("- **kpi_ejecucion** = gasto_acumulado / presupuesto.\n")
-    lines.append("- **Interpretación**: valores > 1 implican sobre-ejecución.\n")
+    lines.append("- **gasto_acumulado** = suma de importes en `gastos.csv`\n")
+    lines.append("- **presupuesto** = importe planificado en `presupuesto.csv`\n")
+    lines.append("- **kpi_ejecucion** = gasto_acumulado / presupuesto\n")
+    lines.append("- Valores > 1.0 indican sobre-ejecución del presupuesto.\n")
 
     lines.append("## 3. Ejecución por área\n")
-    lines.append("| Área | Presupuesto | Gasto acumulado | KPI ejecución |\n")
-    lines.append("|------|-------------|-----------------|---------------|\n")
+    lines.append("| Área | Presupuesto | Gasto | KPI |\n")
+    lines.append("|------|--------------|-------|-----|\n")
     for _, r in kpi_area.iterrows():
         lines.append(
             f"| {r['area']} | {r['presupuesto']:.2f} | {r['gasto_acumulado']:.2f} | "
             f"{'' if pd.isna(r['kpi_ejecucion']) else f'{r['kpi_ejecucion']*100:.1f}%'} |\n"
         )
 
-    lines.append("\n## 4. Ejecución por área y partida\n")
-    lines.append("| Área | Partida | Presupuesto | Gasto acumulado | KPI |\n")
-    lines.append("|------|---------|-------------|-----------------|-----|\n")
-    for _, r in df_kpi.sort_values(["area", "partida"]).iterrows():
+    lines.append("\n## 4. Top 10 áreas por gasto\n")
+    lines.append("| Área | Gasto | Presupuesto | KPI |\n")
+    lines.append("|------|-------|-------------|-----|\n")
+    for _, r in top_areas.iterrows():
         lines.append(
-            f"| {r['area']} | {r['partida']} | {r['presupuesto']:.2f} | {r['gasto_acumulado']:.2f} | "
+            f"| {r['area']} | {r['gasto_acumulado']:.2f} | {r['presupuesto']:.2f} | "
             f"{'' if pd.isna(r['kpi_ejecucion']) else f'{r['kpi_ejecucion']*100:.1f}%'} |\n"
         )
 
-    lines.append("\n## 5. Tendencia mensual de gasto (por área)\n")
+    lines.append("\n## 5. Top 10 partidas (área + partida) por gasto\n")
+    lines.append("| Área | Partida | Gasto | Presupuesto | KPI |\n")
+    lines.append("|------|---------|-------|-------------|-----|\n")
+    for _, r in top_partidas.iterrows():
+        lines.append(
+            f"| {r['area']} | {r['partida']} | {r['gasto_acumulado']:.2f} | {r['presupuesto']:.2f} | "
+            f"{'' if pd.isna(r['kpi_ejecucion']) else f'{r['kpi_ejecucion']*100:.1f}%'} |\n"
+        )
+
+    lines.append("\n## 6. Top 10 días con mayor gasto total\n")
+    lines.append("| Fecha | Gasto |\n")
+    lines.append("|-------|-------|\n")
+    for _, r in gasto_diario_total.iterrows():
+        lines.append(f"| {r['fecha_d']} | {r['gasto']:.2f} |\n")
+
+    lines.append("\n## 7. Tendencia mensual de gasto\n")
     lines.append("| Mes | Área | Gasto mensual |\n")
     lines.append("|-----|------|----------------|\n")
     for _, r in monthly.sort_values(["year_month", "area"]).iterrows():
         lines.append(f"| {r['year_month']} | {r['area']} | {r['gasto_mensual']:.2f} |\n")
 
-    if not invalid_gastos.empty:
-        lines.append("\n## 6. Filas en cuarentena (gastos descartados)\n")
-        lines.append("| fecha | area | partida | importe | causa |\n")
-        lines.append("|-------|------|---------|---------|--------|\n")
-        for _, r in invalid_gastos.iterrows():
-            fecha = r["fecha"].date().isoformat() if pd.notna(r["fecha"]) else ""
-            importe = f"{r['importe']:.2f}" if pd.notna(r["importe"]) else ""
-            causa = r.get("_quarantine_cause", "")
-            lines.append(
-                f"| {fecha} | {r['area']} | {r['partida']} | {importe} | {causa} |\n"
-            )
+    lines.append("\n## 8. Conclusiones\n")
+    for c in conclusiones:
+        lines.append(f"{c}\n")
 
     with open(report_path, "w", encoding="utf-8") as f:
         f.writelines(lines)
@@ -492,21 +593,24 @@ def generate_report(df_kpi: pd.DataFrame, monthly: pd.DataFrame, invalid_gastos:
     print(f"✓ Reporte generado en: {report_path}")
 
 
-print("\n" + "-" * 70)
-print("3. ORO: KPI + TENDENCIA + PERSISTENCIA + REPORTE")
-print("-" * 70)
-df_kpi = build_kpi(gastos_clean, presup_clean)
-monthly = build_monthly_trend(gastos_clean)
+def main():
+    print("\n" + "-" * 70)
+    print("3. ORO: KPI + TENDENCIA + PERSISTENCIA + REPORTE")
+    print("-" * 70)
+    df_kpi = build_kpi(gastos_clean, presup_clean)
+    monthly = build_monthly_trend(gastos_clean)
 
-print("\n" + "-" * 70)
-print("4. ALMACENAMIENTO: SQLITE + VISTAS")
-print("-" * 70)
-save_parquet(df_kpi, monthly)
-save_sqlite(df_kpi, monthly)
+    print("\n" + "-" * 70)
+    print("4. ALMACENAMIENTO: SQLITE + VISTAS")
+    print("-" * 70)
+    save_parquet(df_kpi, monthly)
+    save_sqlite(df_kpi, monthly)
 
-print("\n" + "-" * 70)
-print("5. REPORTE MARKDOWN")
-print("-" * 70)
-generate_report(df_kpi, monthly, gastos_quar)
+    print("\n" + "-" * 70)
+    print("5. REPORTE MARKDOWN")
+    print("-" * 70)
+    generate_report(df_kpi, monthly, gastos_quar, gastos_clean)
 
+if __name__ == "__main__":
+    main()
 

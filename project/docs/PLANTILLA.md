@@ -1,10 +1,10 @@
-# Resumen Proyecto ETL — Finanzas: Presupuesto vs Gasto
+# Resumen Proyecto ETL <Br>Finanzas: Presupuesto vs Gasto <Br> PLANTILLA.md
 
-title: "Plantilla de documento del proyecto"<br>
-tags: ["UT1","RA1","docs"] <br>
-version: "1.0.0"<br>
-owner: "Rafael Garcia Lopez"<br>
-status: "Publicado" 
+- **title:** "Plantilla de documento del proyecto"<br>
+- **tags:** ["UT1","RA1","docs"] <br>
+- **version:** "1.0.0"<br>
+- **owner:** "Rafael Garcia Lopez"<br>
+- **status:** "Publicado" 
 
 ## 1️⃣ Objetivo
 
@@ -24,7 +24,7 @@ Implementar un **proceso ETL ligero e idempotente** para comparar **presupuesto 
 - Ingesta batch de archivos CSV (`gastos.csv`, `presupuesto.csv`).
 - Limpieza, validación y control de calidad de datos.
 - Cálculo de KPI y tendencias mensuales.
-- Almacenamiento en Parquet y SQLite.
+- Almacenamiento en Parquet y SQLite (para consultas).
 - Generación automática de reporte Markdown.
 
 **No cubre:**
@@ -46,7 +46,7 @@ Implementar un **proceso ETL ligero e idempotente** para comparar **presupuesto 
   - Nulos: filas incompletas → quarantine.  
   - Rangos: `importe >= 0` y `< 1_000_000`; `fecha <= hoy`.  
   - Dominios: áreas y partidas deben existir en `presupuesto_clean`.  
-- **Trazabilidad:** `_ingest_ts`, `_source_file`, `_batch_id` en todas las capas.
+- **Trazabilidad:** `_ingest_ts`, `_source_file`, `_batch_id` en **bronze** y **silver**.
 - **Cuarentena:** `data/quarantine/` con causas documentadas.
 
 ---
@@ -100,7 +100,7 @@ Gastos: 350 filas → Clean=340, Quarantine=10
 
 ## 6️⃣ Resultados
 
-VER REPORTE GENERADO `output/reporte.md`
+**VER REPORTE** `output/reporte.md`
 
 ---
 
@@ -109,6 +109,7 @@ VER REPORTE GENERADO `output/reporte.md`
 - La idempotencia por `batch_id` simplificó la reejecución.  
 - Faltó automatizar alertas de cuarentena y sobre-ejecución.  
 - Es clave documentar los dominios válidos (áreas, partidas) antes de la carga.
+- La modularidad (bronze → silver → gold) facilitó la depuración y validación por etapas.
 
 ---
 

@@ -1,12 +1,12 @@
-# Reglas de Limpieza y Calidad
+# Reglas de Limpieza y Calidad <Br> 20-limpieza-calidad.md
 
 ## Tipos y formatos
 
 | Campo | Tipo esperado | Validación / Formato |
 |--------|----------------|----------------------|
 | `fecha` | `datetime` ISO (`YYYY-MM-DD` o `TIMESTAMP UTC`) | Se convierte con `pd.to_datetime(..., errors="coerce")`. Filas con fecha inválida → **quarantine**. |
-| `importe`, `presupuesto` | `DECIMAL(18,2)` | Numérico ≥ 0. Se redondea a 2 decimales. |
-| `area`, `partida` | texto normalizado | Se limpian tildes, espacios, se pasa a minúsculas. Campos vacíos → **quarantine**. |
+| `importe`, `presupuesto` | `DECIMAL(18,2)` | Numérico ≥ 0. <Br> Se redondea a 2 decimales. |
+| `area`, `partida` | texto normalizado | Se limpian tildes, espacios, se pasa a minúsculas. <Br> Campos vacíos → **quarantine**. |
 
 ---
 
@@ -16,10 +16,11 @@
 - `fecha`
 - `area`
 - `partida`
-- `importe` o `presupuesto` (según dataset)
+- `importe` / `presupuesto` (según dataset)
 
 **Tratamiento:**
-- Si cualquiera de estos es nulo o no convertible al tipo esperado, la fila se marca con `_quarantine_cause` indicando el motivo (por ejemplo: `fecha_invalida`, `importe_invalido`, `partida_vacia`).
+- Si cualquiera de estos campos es nulo o no convertible al tipo esperado, la fila se marca con `_quarantine_cause` indicando el motivo (ejemplo: `fecha_invalida`, `partida_vacia`).
+- Puede haber varios motivos por los que una fila no es válida, se registran todos en `_quarantine_cause`
 - Las filas inválidas se envían a:
   - `data/quarantine/gastos_invalidos.parquet`
   - `data/quarantine/presupuesto_invalidos.parquet`
@@ -31,8 +32,7 @@
 | Regla | Descripción |
 |--------|--------------|
 | `importe >= 0` y `presupuesto >= 0` | Importes negativos no permitidos. |
-| `importe ≤ 1_000_000` | Protección contra valores atípicos o errores de carga. |
-| `fecha ≤ hoy` | No se admiten fechas futuras. |
+| `importe ≤ 300_000` | Protección contra valores atípicos o errores de carga. |
 | `area_normalizada` y `partida_normalizada` | Deben existir en las listas de presupuesto válidas. |
 
 **Filas fuera de rango o dominio** → **quarantine** con causa.
@@ -63,16 +63,17 @@
 
 ## Trazabilidad
 
-Cada fila procesada en **bronze**, **silver** y **gold** conserva metadatos técnicos:
+Cada fila procesada en **bronze** y **silver** conserva metadatos técnicos:
 
 | Campo | Descripción |
 |--------|--------------|
-| `_ingest_ts` | Timestamp UTC de la ingesta. |
-| `_source_file` | Nombre del archivo fuente (CSV). |
-| `_batch_id` | Identificador único del archivo (hash md5). |
-| `last_ingest_ts` / `source_files` | (en oro) Máximo `_ingest_ts` y lista de orígenes. |
+| `_ingest_ts` | Timestamp UTC de la ingesta. (se genera al leer el CSV) |
+| `_source_file` | Nombre del archivo origen (gastos.csv o presupuesto.csv). |
+| `_batch_id` | Identificador único del archivo (hash MD5 basado en ruta, tamaño y fecha de modificación). |
 
-Estos campos permiten rastrear cualquier valor desde la capa oro hasta su fuente original.
+**Nota**:
+- En las capas **bronze** y **silver** se conservan los metadatos `_ingest_ts`, `source_files` y `_batch_id` para cada fila.
+- En la capa **oro**, se agregan los datos limpios sin estos campos técnicos (no se conserva trazabilidad a nivel de fila).
 
 ---
 

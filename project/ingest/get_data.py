@@ -74,9 +74,9 @@ for i in trange(N, desc="Generando gastos"):
     presup_row = df_presup[(df_presup["area"] == area) & (df_presup["partida"] == partida)]
     if not presup_row.empty:
         presup = presup_row.iloc[0]["presupuesto"]
-        importe = random.uniform(100, presup * 0.1)
+        importe = random.uniform(100, presup * 0.01)
     else:
-        importe = random.uniform(100, 5000)
+        importe = random.uniform(100, 500)
 
     registro = {
         "fecha": fecha.strftime("%Y-%m-%d"),

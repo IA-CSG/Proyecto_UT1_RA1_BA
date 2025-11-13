@@ -15,19 +15,17 @@ Implementar un **proceso ETL ligero e idempotente** para comparar **presupuesto 
 project/
 ├─ data/
 │  ├─ drops/               # CSV de entrada (presupuesto.csv, gastos.csv)
-│  ├─ quarantine/          # registros inválidos
+│  ├─ quarantine/          # registros inválidos (.parquet)
 │  └─ storage/
-│     ├─ bronze/           # ingesta cruda, con batch_id y manifest
-│     ├─ silver/           # datos limpios (clean)
-│     └─ gold/             # indicadores listos para explotar
-├─ docs/                   # documentación proyecto
+│     ├─ bronze/           # archivos raw (ingesta cruda) y el manifest (.parquet)
+│     ├─ silver/           # datos limpios (clean) (.parquet)
+│     └─ gold/             # KPI y tendencias (.parquet)
+├─ docs/                   # documentación del proyecto (.md)
 ├─ ingest/
 │  ├─ get_data.py          # genera los CSV de ejemplo
 │  └─ run.py               # programa principal: parquet + sqlite + reporte.md
-├─ output/
-│  └─ reporte.md           # informe generado
-└─ sql/
-   └─ finanzas.db          # SQLite con tablas y vista
+├─ output/                 # guardar el reporte markdown (reporte.md)
+└─ sql/                    # Guarda la base de datos finanzas.db (SQLite) con tablas y vista    
 ```
 
 ## 3. Flujo resumido
@@ -38,7 +36,7 @@ project/
 | **2. SILVER – Limpieza** | Normaliza textos, valida áreas/partidas, tipos y rangos. <br>Separa registros válidos (clean) e inválidos (quarantine). | `data/storage/silver/*.parquet` y `data/quarantine/*.parquet` |
 | **3. GOLD – Indicadores** | Calcula **KPI de ejecución** (`gasto/presupuesto`).<br>Calcula **tendencia mensual** del gasto por área. | `data/storage/gold/*.parquet` |
 | **4. SQLite** | Guarda tablas `kpi_ejecucion`, `tendencia_mensual`.<br>Crea vista `vw_kpi_area` con resumen por área. | `sql/finanzas.db` |
-| **5. Reporte** | Genera informe Markdown con resumenes, tendencias y filas inválidas. | `output/reporte.md` |
+| **5. Reporte** | Genera informe Markdown con resumenes y tendencias. | `output/reporte.md` |
 
 ---
 

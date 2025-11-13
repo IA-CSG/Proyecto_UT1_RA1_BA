@@ -1,4 +1,4 @@
-# Modelo de negocio (capa oro)
+# Modelo de negocio (capa oro) <Br> 30-modelado-oro.md
 
 ## Objetivo
 Poder contestar a preguntas como:
@@ -84,7 +84,7 @@ Poder contestar a preguntas como:
 - **Impuestos:** los importes se consideran **sin IVA** o ya normalizados (lo documenta el reporte).
 - **Dedupe:** antes de llegar a oro se aplica la política **“último gana por `_ingest_ts`”** tanto en presupuesto como en gastos.
 - **Catálogo de partidas/áreas:** la referencia válida es la que viene en `presupuesto_clean`; los gastos con partidas/áreas fuera de ese dominio se van a **quarantine**.
-- **Trazabilidad:** se conservan `_ingest_ts`, `_source_file`, `_batch_id` desde bronze hasta oro (en oro como `last_ingest_ts` y `source_files`).
+- **Trazabilidad:** se conserva en **bronze** y **silver**; la capa **oro** contiene únicamente datos agregados sin metadatos técnicos.
 
 ---
 
