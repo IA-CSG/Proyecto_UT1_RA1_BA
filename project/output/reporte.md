@@ -1,14 +1,18 @@
+\newpage
 # Informe de Ejecución Presupuestaria
 _Generado: 2025-11-13 01:28_
+
 ## 1. Contexto
 - Fuente: `gastos.csv` y `presupuesto.csv`
 - Periodo: 2025-01-01 a 2025-11-13
 - Objetivo: medir la ejecución presupuestaria por área y partida.
+
 ## 2. Definiciones de KPI
 - **gasto_acumulado** = suma de importes en `gastos.csv`
 - **presupuesto** = importe planificado en `presupuesto.csv`
 - **kpi_ejecucion** = gasto_acumulado / presupuesto
 - Valores > 1.0 indican sobre-ejecución del presupuesto.
+
 ## 3. Ejecución por área
 | Área | Presupuesto | Gasto | KPI |
 |------|--------------|-------|-----|

@@ -1,4 +1,5 @@
-# Diseño de Ingestión <Br> 10-diseno-ingesta.md
+\newpage
+# Diseño de Ingestión <Br> (10-diseno-ingesta.md)
 
 ## Resumen
 - Los datos de **presupuesto** y **gastos** entran desde ficheros CSV depositados en una ruta controlada (`data/drops/`).
@@ -11,10 +12,10 @@
 ## Fuente
 
 - **Origen:**  
-  - `data/drops/gastos.csv`  
+  - `data/drops/gastos.csv`
   - `data/drops/presupuesto.csv`
 - **Formato:** CSV (UTF-8, separado por `;`)
-- **Frecuencia esperada:** batch manual.  
+- **Frecuencia esperada:** batch manual.
 
 ---
 
@@ -22,7 +23,7 @@
 
 - **Modo:** batch por archivo.
 - **Incremental:** controlado por archivo mediante **hash del archivo**. No se reingesta el mismo archivo (con mismo path, tamaño y mtime).
-- **Particionado:** no se particiona físicamente en disco por fecha; se guarda en Parquet en capas (`bronze/`, `silver/`, `gold/`).  
+- **Particionado:** no se particiona físicamente en disco por fecha; se guarda en Parquet en capas (`bronze/`, `silver/`, `gold/`).
 
 ---
 
@@ -32,10 +33,10 @@
   - Se calcula como `md5(path + tamaño + mtime)` lo que garantiza que si el archivo no cambia, el `batch_id` es el mismo.
   - Se persiste en `bronze/ingest_manifest.parquet`.
 - **Clave natural (lógica):**  
-  - Para **gastos**: (`fecha`, `area_normalizada`, `partida_normalizada`)  
+  - Para **gastos**: (`fecha`, `area_normalizada`, `partida_normalizada`)
   - Para **presupuesto**: (`area_normalizada`, `partida_normalizada`)
-- **Política de deduplicación:**  
-  - **último gana por `_ingest_ts`**.  
+- **Política de deduplicación:**
+  - **último gana por `_ingest_ts`**.
   - Se ordenan los registros por `_ingest_ts` ascendente y se hace `drop_duplicates(..., keep="last")` en silver.
   - Esto permite reinyectar el mismo registro corregido en una ingesta posterior.
 

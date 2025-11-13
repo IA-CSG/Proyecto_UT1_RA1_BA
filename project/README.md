@@ -1,13 +1,19 @@
-# ETL Finanzas — Presupuesto vs Gastos
+\newpage
+# ETL Finanzas — Presupuesto vs Gastos <Br> (README.md)
 
 ## 1. Objetivo
 Implementar un **proceso ETL ligero e idempotente** para comparar **presupuesto vs gasto** por área y partida, con el fin de:
+
 - Calcular el **KPI de ejecución presupuestaria** (`gasto_acumulado / presupuesto`).
+
 - Detectar **sobre-ejecuciones** y **sub-ejecuciones**.
+
 - Generar un **reporte automatizado** y trazable para la toma de decisiones financieras.
 
 > **Problema que resuelve:**  
 > La falta de un control sobre la ejecución presupuestaria, dependiente de hojas de cálculo manuales y sin trazabilidad.
+
+---
 
 ## 2. Estructura del proyecto
 
@@ -28,6 +34,8 @@ project/
 └─ sql/                    # Guarda la base de datos finanzas.db (SQLite) con tablas y vista    
 ```
 
+---
+
 ## 3. Flujo resumido
 
 | Etapa | Descripción | Output |
@@ -46,6 +54,7 @@ pip install -r project/requirements.txt
 python ingest/get_data.py      # genera los CSV de ejemplo
 python ingest/run.py           # programa principal: parquet + sqllite + reporte.md
 ```
+
 ---
 
 ## 5. Publicación web (GitHub)

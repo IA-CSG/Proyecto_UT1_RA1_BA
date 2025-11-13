@@ -1,11 +1,12 @@
-# **Ejecución presupuestaria al 13 de noviembre de 2025**
+\newpage
+# **Ejecución presupuestaria**<Br> **Fecha 13 de noviembre de 2025**
 
 **Titular:**  
 El gasto acumulado alcanza el **43% del presupuesto anual**, reflejando una ejecución conservadora frente al avance del año (≈ 88% del periodo transcurrido). Ningún área presenta sobre-ejecución (> 100%), pero se observa **sub-ejecución generalizada** (< 50%), lo que sugiere espacio para acelerar proyectos o reprogramar partidas hacia el cierre del ejercicio.
 
 ---
 
-## 1️⃣ Métricas clave
+## 1. Métricas clave
 
 | Indicador | Valor | Variación | Comentario |
 |------------|--------|------------|-------------|
@@ -19,7 +20,7 @@ El gasto acumulado alcanza el **43% del presupuesto anual**, reflejando una ejec
 
 ---
 
-## 2️⃣ Contribución por área
+## 2. Contribución por área
 
 | Área | Presupuesto (€) | Gasto (€) | KPI (%) | Estado |
 |------|------------------|-----------|----------|--------|
@@ -39,7 +40,7 @@ El gasto acumulado alcanza el **43% del presupuesto anual**, reflejando una ejec
 
 ---
 
-## 3️⃣ Tendencia mensual
+## 3. Tendencia mensual
 
 **Evolución reciente del gasto (últimos 6 meses):**
 
@@ -56,7 +57,7 @@ El gasto acumulado alcanza el **43% del presupuesto anual**, reflejando una ejec
 
 ---
 
-## 4️⃣ Calidad de datos
+## 4. Calidad de datos
 
 | Capa | Filas procesadas | Validez |
 |------|------------------|----------|
@@ -68,9 +69,12 @@ El gasto acumulado alcanza el **43% del presupuesto anual**, reflejando una ejec
 
 ---
 
-### **Conclusión**
-La organización mantiene una **ejecución presupuestaria prudente (43%)**, coherente con un control financiero conservador, pero **inferior al ritmo esperado** para noviembre (≈ 88 % del año).  
+## 5. Conclusión
+La organización mantiene una **ejecución presupuestaria prudente (43%)**, coherente con un control financiero conservador, pero **inferior al ritmo esperado** para noviembre (≈ 88 % del año).
 Se recomienda:
-- **Acelerar la ejecución** en áreas con compromisos pendientes (especialmente Administración y Dirección).  
-- **Revisar partidas infrautilizadas** para posibles reasignaciones en diciembre.  
+
+- **Acelerar la ejecución** en áreas con compromisos pendientes (especialmente Administración y Dirección).
+
+- **Revisar partidas infrautilizadas** para posibles reasignaciones en diciembre.
+
 - **Analizar causas estructurales** de sub-ejecución (retrasos, licitaciones, reprogramaciones).

@@ -1,11 +1,12 @@
-# Plantilla de reporte (resumen ejecutivo)
+\newpage
+# Plantilla de reporte (resumen ejecutivo) <Br> (40-reporte-plantilla.md)
 
 **Titular:**  
 Ejecución presupuestaria del periodo — Ej.: *El gasto total alcanza el 92% del presupuesto (+5 pp vs mes previo), impulsado por el área de Operaciones. Revisar partidas con sobre-ejecución >100%.*
 
 ---
 
-## 1️⃣ Métricas clave
+## 1. Métricas clave
 
 | Indicador | Valor | Variación | Comentario |
 |------------|--------|------------|-------------|
@@ -17,7 +18,7 @@ Ejecución presupuestaria del periodo — Ej.: *El gasto total alcanza el 92% de
 
 ---
 
-## 2️⃣ Contribución por área
+## 2. Contribución por área
 
 | Área | Presupuesto (€) | Gasto (€) | KPI (%) | Estado |
 |------|------------------|-----------|---------|--------|
@@ -32,7 +33,7 @@ Ejecución presupuestaria del periodo — Ej.: *El gasto total alcanza el 92% de
 
 ---
 
-## 3️⃣ Tendencia mensual
+## 3. Tendencia mensual
 
 **Ejemplo de evolución (últimos 6 meses):**
 
@@ -49,7 +50,7 @@ Ejecución presupuestaria del periodo — Ej.: *El gasto total alcanza el 92% de
 
 ---
 
-## 4️⃣ Calidad de datos
+## 4. Calidad de datos
 
 | Capa | Filas procesadas | Validez |
 |------|------------------|----------|
@@ -67,16 +68,16 @@ Ejecución presupuestaria del periodo — Ej.: *El gasto total alcanza el 92% de
 
 ---
 
-## 5️⃣ Próximos pasos
+## 5. Próximos pasos
 
-- **Acción 1:** Revisar partidas con ejecución >110% en áreas críticas.  
-- **Acción 2:** Validar si los gastos fuera de dominio corresponden a nuevas partidas no presupuestadas.  
-- **Acción 3:** Analizar tendencia mensual y ajustar presupuestos para diciembre.  
+- **Acción 1:** Revisar partidas con ejecución >110% en áreas críticas.
+- **Acción 2:** Validar si los gastos fuera de dominio corresponden a nuevas partidas no presupuestadas.
+- **Acción 3:** Analizar tendencia mensual y ajustar presupuestos para diciembre.
 - **Acción 4:** Automatizar alertas de sobre-ejecución semanal.
 
 ---
 
-### ✍️ Notas
-- Todos los valores expresados en **EUR**.  
-- Importes sin IVA, periodificados según fecha de gasto.  
+## 6. Notas
+- Todos los valores expresados en **EUR**.
+- Importes sin IVA, periodificados según fecha de gasto.
 - KPI principal: `kpi_ejecucion = gasto_acumulado / presupuesto`.

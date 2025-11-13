@@ -1,4 +1,5 @@
-# Resumen Proyecto ETL <Br>Finanzas: Presupuesto vs Gasto <Br> PLANTILLA.md
+\newpage
+# Resumen Proyecto ETL <Br>Finanzas: Presupuesto vs Gasto <Br> (PLANTILLA.md)
 
 - **title:** "Plantilla de documento del proyecto"<br>
 - **tags:** ["UT1","RA1","docs"] <br>
@@ -6,11 +7,14 @@
 - **owner:** "Rafael Garcia Lopez"<br>
 - **status:** "Publicado" 
 
-## 1️⃣ Objetivo
+## 1. Ojetivo
 
 Implementar un **proceso ETL ligero e idempotente** para comparar **presupuesto vs gasto** por área y partida, con el fin de:
+
 - Calcular el **KPI de ejecución presupuestaria** (`gasto_acumulado / presupuesto`).
+
 - Detectar **sobre-ejecuciones** y **sub-ejecuciones**.
+
 - Generar un **reporte automatizado** y trazable para la toma de decisiones financieras.
 
 > **Problema que resuelve:**  
@@ -18,23 +22,31 @@ Implementar un **proceso ETL ligero e idempotente** para comparar **presupuesto 
 
 ---
 
-## 2️⃣ Alcance
+## 2. Alcance
 
 **Cubre:**
+
 - Ingesta batch de archivos CSV (`gastos.csv`, `presupuesto.csv`).
+
 - Limpieza, validación y control de calidad de datos.
+
 - Cálculo de KPI y tendencias mensuales.
+
 - Almacenamiento en Parquet y SQLite (para consultas).
+
 - Generación automática de reporte Markdown.
 
 **No cubre:**
+
 - Integración en sistemas en tiempo real o streaming.
+
 - Alertas automáticas o dashboards visuales.
+
 - Validación contable o auditoría financiera externa.
 
 ---
 
-## 3️⃣ Decisiones / Reglas
+## 3. Decisiones / Reglas
 
 - **Estrategia de ingestión:** batch (por archivo), idempotente por `batch_id = md5(path + size + mtime)`.  
 - **Clave natural:**  
@@ -42,16 +54,16 @@ Implementar un **proceso ETL ligero e idempotente** para comparar **presupuesto 
   - `gastos`: (`fecha`, `area_normalizada`, `partida_normalizada`)
 - **Política de duplicados:** “último gana por `_ingest_ts`”.
 - **Validaciones:**  
-  - Tipos: `fecha` (ISO), `importe` (DECIMAL(18,2)), `area`/`partida` (texto).  
-  - Nulos: filas incompletas → quarantine.  
-  - Rangos: `importe >= 0` y `< 1_000_000`; `fecha <= hoy`.  
-  - Dominios: áreas y partidas deben existir en `presupuesto_clean`.  
+  - Tipos: `fecha` (ISO), `importe` (DECIMAL(18,2)), `area`/`partida` (texto).
+  - Nulos: filas incompletas → quarantine.
+  - Rangos: `importe >= 0` y `< 1_000_000`; `fecha <= hoy`.
+  - Dominios: áreas y partidas deben existir en `presupuesto_clean`.
 - **Trazabilidad:** `_ingest_ts`, `_source_file`, `_batch_id` en **bronze** y **silver**.
 - **Cuarentena:** `data/quarantine/` con causas documentadas.
 
 ---
 
-## 4️⃣ Procedimiento / Pasos
+## 4. Procedimiento / Pasos
 
 1. **Preparar archivos fuente:**  
    - Colocar `gastos.csv` y `presupuesto.csv` en `data/drops/`.
@@ -79,7 +91,7 @@ Implementar un **proceso ETL ligero e idempotente** para comparar **presupuesto 
 
 ---
 
-## 5️⃣ Evidencias
+## 5. Evidencias
 
 | Elemento | Ruta / Descripción |
 |-----------|--------------------|
@@ -98,28 +110,28 @@ Gastos: 350 filas → Clean=340, Quarantine=10
 
 ---
 
-## 6️⃣ Resultados
+## 6. Resultados
 
 **VER REPORTE** `output/reporte.md`
 
 ---
 
-## 7️⃣ Lecciones aprendidas
+## 7. Lecciones aprendidas
 
-- La idempotencia por `batch_id` simplificó la reejecución.  
-- Faltó automatizar alertas de cuarentena y sobre-ejecución.  
+- La idempotencia por `batch_id` simplificó la reejecución.
+- Faltó automatizar alertas de cuarentena y sobre-ejecución.
 - Es clave documentar los dominios válidos (áreas, partidas) antes de la carga.
 - La modularidad (bronze → silver → gold) facilitó la depuración y validación por etapas.
 
 ---
 
-## 8️⃣ Próximos pasos
+## 8. Próximos pasos
 
 - Implementar scheduler
 - Automatizar control de % cuarentena
-- Revisar partidas con ejecución >110% en áreas críticas.  
-- Validar si los gastos fuera de dominio corresponden a nuevas partidas no presupuestadas.  
-- Analizar tendencia mensual y ajustar presupuestos para diciembre.  
+- Revisar partidas con ejecución >110% en áreas críticas. 
+- Validar si los gastos fuera de dominio corresponden a nuevas partidas no presupuestadas.
+- Analizar tendencia mensual y ajustar presupuestos para diciembre.
 - Automatizar alertas de sobre-ejecución semanal.
 
 ---

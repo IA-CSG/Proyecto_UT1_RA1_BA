@@ -1,4 +1,5 @@
-# Reglas de Limpieza y Calidad <Br> 20-limpieza-calidad.md
+\newpage
+# Reglas de Limpieza y Calidad <Br> (20-limpieza-calidad.md)
 
 ## Tipos y formatos
 
@@ -19,10 +20,15 @@
 - `importe` / `presupuesto` (según dataset)
 
 **Tratamiento:**
+
 - Si cualquiera de estos campos es nulo o no convertible al tipo esperado, la fila se marca con `_quarantine_cause` indicando el motivo (ejemplo: `fecha_invalida`, `partida_vacia`).
+
 - Puede haber varios motivos por los que una fila no es válida, se registran todos en `_quarantine_cause`
+
 - Las filas inválidas se envían a:
+
   - `data/quarantine/gastos_invalidos.parquet`
+
   - `data/quarantine/presupuesto_invalidos.parquet`
 
 ---
@@ -72,7 +78,9 @@ Cada fila procesada en **bronze** y **silver** conserva metadatos técnicos:
 | `_batch_id` | Identificador único del archivo (hash MD5 basado en ruta, tamaño y fecha de modificación). |
 
 **Nota**:
+
 - En las capas **bronze** y **silver** se conservan los metadatos `_ingest_ts`, `source_files` y `_batch_id` para cada fila.
+
 - En la capa **oro**, se agregan los datos limpios sin estos campos técnicos (no se conserva trazabilidad a nivel de fila).
 
 ---

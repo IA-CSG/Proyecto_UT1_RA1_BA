@@ -1,10 +1,15 @@
-# Modelo de negocio (capa oro) <Br> 30-modelado-oro.md
+\newpage
+# Modelo de negocio (capa oro) <Br> (30-modelado-oro.md)
 
 ## Objetivo
 Poder contestar a preguntas como:
+
 - ¿cuánto se ha gastado por área y partida?
+
 - ¿cuánto estaba presupuestado?
+
 - ¿qué porcentaje de ejecución tiene cada área?
+
 - ¿cómo evoluciona el gasto mes a mes?
 
 ---
